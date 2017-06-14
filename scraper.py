@@ -9,9 +9,7 @@ import urllib2
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-
-#### FUNCTIONS 1.1
-import requests   #import requests for validating urls
+#### FUNCTIONS 1.0
 
 def validateFilename(filename):
     filenameregex = '^[a-zA-Z0-9]+_[a-zA-Z0-9]+_[a-zA-Z0-9]+_[0-9][0-9][0-9][0-9]_[0-9QY][0-9]$'
@@ -39,19 +37,19 @@ def validateFilename(filename):
 
 def validateURL(url):
     try:
-        r = requests.get(url)
+        r = urllib2.urlopen(url)
         count = 1
-        while r.status_code == 500 and count < 4:
+        while r.getcode() == 500 and count < 4:
             print ("Attempt {0} - Status code: {1}. Retrying.".format(count, r.status_code))
             count += 1
-            r = requests.get(url)
+            r = urllib2.urlopen(url)
         sourceFilename = r.headers.get('Content-Disposition')
 
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
         else:
             ext = os.path.splitext(url)[1]
-        validURL = r.status_code == 200
+        validURL = r.getcode() == 200
         validFiletype = ext.lower() in ['.csv', '.xls', '.zip', '.xlsx', '.pdf']
         return validURL, validFiletype
     except:
@@ -86,8 +84,8 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "NHTRTVFT_5BPNFT_gov"
-url = "http://www.5boroughspartnership.nhs.uk/financial-transparency-reports/"
+entity_id = "FTRY8X_DCHSNFT_gov"
+url = "https://data.gov.uk/dataset/spend-over-25-000-in-derbyshire-community-health-services"
 errors = 0
 data = []
 
@@ -100,13 +98,15 @@ soup = BeautifulSoup(html, 'lxml')
 #### SCRAPE DATA
 
 
-blocks = soup.find('div', 'related_docs').find_all('a')
+blocks = soup.find_all('div', 'inner')
 for block in blocks:
-    url = 'http://www.5boroughspartnership.nhs.uk' + block['href']
-    csvMth = block.text.split()[0][:3]
-    csvYr = block.text.split()[-1]
+    url = block.find_all('a')[-1]['href']
+    link_text = block.find('span', 'inner-cell').text.strip()
+    csvMth = link_text[:3]
+    csvYr = link_text.split()[1]
     csvMth = convert_mth_strings(csvMth.upper())
     data.append([csvYr, csvMth, url])
+
 
 
 #### STORE DATA 1.0
