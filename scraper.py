@@ -100,13 +100,12 @@ soup = BeautifulSoup(html, 'lxml')
 
 blocks = soup.find_all('div', 'inner')
 for block in blocks:
-    url = block.find_all('a')[-1]['href']
+    url = block.find_all('a')[-1]['href'].split('?')[0]
     link_text = block.find('span', 'inner-cell').text.strip()
     csvMth = link_text[:3]
     csvYr = link_text.split()[1]
     csvMth = convert_mth_strings(csvMth.upper())
     data.append([csvYr, csvMth, url])
-
 
 
 #### STORE DATA 1.0
